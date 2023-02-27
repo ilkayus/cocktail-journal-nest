@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
+import * as bcrypt from 'bcrypt';
 
 export type UserDocument = HydratedDocument<User>;
 
@@ -10,6 +11,7 @@ export class User {
     required: [true, 'Please tell us your name!'],
   })
   username: string;
+
   @Prop({
     type: String,
     required: [true, 'Please provide an email address!'],
@@ -17,10 +19,12 @@ export class User {
     lowercase: true,
   })
   email: string;
+
   @Prop({
     type: String,
   })
   photo: string;
+
   @Prop({
     type: String,
     required: [true, 'Provide a password'],
@@ -28,6 +32,7 @@ export class User {
     select: false,
   })
   password: string;
+
   @Prop({
     type: String,
     required: [true, 'Confirm your password'],
@@ -39,7 +44,8 @@ export class User {
       message: 'Passwords are not the same',
     },
   })
-  passwordConfirm: string;
+  passwordConfirm: string | undefined;
+
   @Prop([
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,6 +53,7 @@ export class User {
     },
   ])
   favorites: string;
+
   @Prop([
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -54,14 +61,17 @@ export class User {
     },
   ])
   comments: string;
+
   @Prop({
     type: Date,
   })
   passwordChangedAt: Date;
+
   @Prop({
     type: String,
   })
   passwordResetToken: string;
+
   @Prop({
     type: Date,
   })
@@ -69,3 +79,34 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+  this.password = await bcrypt.hash(this.password, 12);
+  this.passwordConfirm = undefined;
+  next();
+});
+
+UserSchema.pre('save', function (next) {
+  if (!this.isModified('password') || this.isNew) return next();
+  this.passwordChangedAt = new Date(Date.now() - 1000);
+  next();
+});
+
+UserSchema.methods.correctPassword = async function (
+  candidate: string,
+  userPassword: string,
+) {
+  return await bcrypt.compare(candidate, userPassword);
+};
+
+// UserSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
+//   if (this.passwordChangedAt) {
+//     const changedTimestamp = parseInt(
+//       this.passwordChangedAt.getTime() / 1000,
+//       10,
+//     );
+//     return changedTimestamp > JWTTimestamp;
+//   }
+//   return false;
+// };
