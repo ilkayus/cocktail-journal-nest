@@ -5,6 +5,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { User, UserDocument } from './schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
+import { SignInUserDto } from './dto/signin-user.dto';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -13,7 +15,32 @@ export class UserService {
     private jwtService: JwtService,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async signin(signInUser: SignInUserDto) {
+    const user = await this.userModel
+      .findOne({ email: signInUser.email })
+      .select('+password');
+    if (!user) {
+      return new Error('Incorrect email or password');
+    }
+    const isPasswordCorrect = await bcrypt.compare(
+      signInUser.password,
+      user.password,
+    );
+    if (!isPasswordCorrect) {
+      return new Error('Incorrect email or password');
+    }
+
+    const token = this.signToken(user._id);
+    return {
+      token,
+      _id: user._id,
+      email: user.email,
+      username: user.username,
+      photo: user.photo,
+    };
+  }
+
+  async signup(createUserDto: CreateUserDto) {
     const newUser = await this.userModel.create({ ...createUserDto });
     return this.createSendToken(newUser);
   }

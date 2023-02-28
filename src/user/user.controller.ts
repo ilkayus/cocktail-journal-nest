@@ -12,16 +12,22 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
+import { SignInUserDto } from './dto/signin-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Post('create')
+  @Post('signup')
   @UsePipes(ValidationPipe)
-  create(@Body() createUserDto: CreateUserDto) {
-    return this.userService.create(createUserDto);
+  signup(@Body() createUserDto: CreateUserDto) {
+    return this.userService.signup(createUserDto);
+  }
+
+  @Post('signin')
+  signin(@Body() signInUserDto: SignInUserDto) {
+    return this.userService.signin(signInUserDto);
   }
 
   @Get()

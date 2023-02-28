@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Document } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 
 export type UserDocument = HydratedDocument<User>;
@@ -93,12 +94,12 @@ UserSchema.pre('save', function (next) {
   next();
 });
 
-UserSchema.methods.correctPassword = async function (
-  candidate: string,
-  userPassword: string,
-) {
-  return await bcrypt.compare(candidate, userPassword);
-};
+// UserSchema.methods.correctPassword = async function (
+//   candidate: string,
+//   userPassword: string,
+// ): Promise<boolean> {
+//   return bcrypt.compare(candidate, userPassword);
+// };
 
 // UserSchema.methods.changedPasswordAfter = function (JWTTimestamp: number) {
 //   if (this.passwordChangedAt) {
